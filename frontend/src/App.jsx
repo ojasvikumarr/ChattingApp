@@ -16,6 +16,9 @@ import PageLoader from "./components/PageLoader.jsx";
 import useAuthUser from "./hooks/useAuthUser.js";
 import Layout from "./components/Layout.jsx";
 import { useThemeStore } from "./store/useThemeStore.js";
+import VideoCallLobby from "./pages/videoCallLobby.jsx";
+import VideoCallRoom from "./pages/videoCallRoom.jsx";
+import SocketEvents from "./components/SocketEvents.jsx";
 
 const App = () => {
   const { isLoading, authUser } = useAuthUser();
@@ -28,7 +31,12 @@ const App = () => {
 
   return (
     <div className="h-screen" data-theme={theme}>
+      <SocketEvents /> 
       <Routes>
+        <Route path="/video/lobby" element={<VideoCallLobby />} />
+        <Route path="/video/room/:id" element={<VideoCallRoom />} />
+
+        {/* Public Routes */}
         <Route
           path="/"
           element={

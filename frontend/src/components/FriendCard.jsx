@@ -1,7 +1,28 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { LANGUAGE_TO_FLAG } from "../constants";
+import { generateRoomId } from "../lib/genId";
+import useAuthUser from "../hooks/useAuthUser";
+import { useSocket } from "../context/SocketProvider";
 
 const FriendCard = ({ friend }) => {
+  const navigate = useNavigate();
+  const { authUser } = useAuthUser();
+  const socket = useSocket(); // get socket from context
+  // console.log("AuthUser", authUser);
+  // console.log("FriendCard", friend);
+  const handleCall = () => {
+    const roomId = generateRoomId(authUser._id, friend._id);
+
+
+    socket.emit("call-user", {
+      to: friend._id, // target user ID
+      from: authUser._id, // sender
+      roomId,
+      callerName: authUser.fullName,
+    });
+
+    navigate(`/video/room/${roomId}`);
+  };
   return (
     <div className="card bg-base-200 hover:shadow-md transition-shadow">
       <div className="card-body p-4">
@@ -27,6 +48,9 @@ const FriendCard = ({ friend }) => {
         <Link to={`/chat/${friend._id}`} className="btn btn-outline w-full">
           Message
         </Link>
+        <button onClick={handleCall} className="btn btn-primary w-full">
+          📞 Call
+        </button>
       </div>
     </div>
   );
