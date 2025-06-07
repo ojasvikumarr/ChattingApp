@@ -17,7 +17,7 @@ import useAuthUser from "./hooks/useAuthUser.js";
 import Layout from "./components/Layout.jsx";
 import { useThemeStore } from "./store/useThemeStore.js";
 import VideoCallLobby from "./pages/videoCallLobby.jsx";
-import VideoCallRoom from "./pages/videoCallRoom.jsx";
+import VideoCallRoom from "./pages/VideoCallRoom.jsx";
 import SocketEvents from "./components/SocketEvents.jsx";
 
 const App = () => {

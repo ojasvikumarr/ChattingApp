@@ -60,5 +60,12 @@ export const setupSocket = (server) => {
     socket.on("disconnect", () => {
       console.log("❌ Socket disconnected:", socket.id);
     });
+
+    // Handle call ended
+    socket.on("call:ended", ({ to }) => {
+      console.log(`❌ Call ended by ${socket.id} ➡️ ${to}`);
+      io.to(to).emit("call:ended");
+    });
+
   });
 };

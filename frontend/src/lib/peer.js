@@ -1,6 +1,9 @@
-// frontend/src/lib/peer.js
 class PeerService {
   constructor() {
+    this.createPeer();
+  }
+
+  createPeer() {
     this.peer = new RTCPeerConnection({
       iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
@@ -13,6 +16,13 @@ class PeerService {
         this.onIceCandidate(event.candidate);
       }
     };
+  }
+
+  resetPeer() {
+    if (this.peer) {
+      this.peer.close();
+    }
+    this.createPeer();
   }
 
   addTracks(stream) {

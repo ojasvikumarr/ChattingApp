@@ -3,6 +3,8 @@ import ReactPlayer from "react-player";
 import { useSocket } from "../context/SocketProvider";
 import peer from "../lib/peer";
 import styled from "styled-components";
+import { useNavigate } from "react-router";
+
 
 const ROOM_ID = "demo-room";
 
@@ -137,6 +139,8 @@ const ControlLabel = styled.span`
 `;
 
 const VideoCallRoom = () => {
+  const navigate = useNavigate();
+
   const socket = useSocket();
   const [remoteSocketId, setRemoteSocketId] = useState(null);
   const [myStream, setMyStream] = useState(null);
@@ -257,6 +261,40 @@ const VideoCallRoom = () => {
     socket.emit("user:call", { to: remoteSocketId, offer });
   }, [remoteSocketId, socket]);
 
+  const handleEndCall = useCallback(() => {
+    if (remoteSocketId) {
+      socket.emit("call:ended", { to: remoteSocketId });
+    }
+
+    // Cleanup local media and remote streams
+    myStream?.getTracks().forEach(track => track.stop());
+    peer.peer.close();
+    peer.resetPeer();
+
+    setMyStream(null);
+    setRemoteStream(null);
+
+    // Navigate back to home
+    navigate("/");
+  }, [remoteSocketId, socket, myStream, navigate]);
+
+  useEffect(() => {
+    const handleCallEnded = () => {
+      console.log("Call ended by remote");
+      myStream?.getTracks().forEach(track => track.stop());
+      peer.peer.close();
+      peer.resetPeer();
+      
+      setMyStream(null);
+      setRemoteStream(null);
+      navigate("/");
+    };
+
+    socket.on("call:ended", handleCallEnded);
+    return () => socket.off("call:ended", handleCallEnded);
+  }, [socket, myStream, navigate]);
+
+
   const toggleMute = () => {
     if (myStream) {
       myStream.getAudioTracks().forEach((track) => {
@@ -336,7 +374,7 @@ const VideoCallRoom = () => {
                 {isVideoOff ? "Show Video" : "Hide Video"}
               </ControlLabel>
             </ControlButton>
-            <ControlButton end>
+            <ControlButton end onClick={handleEndCall}>
               <ControlIcon>❌</ControlIcon>
               <ControlLabel>End Call</ControlLabel>
             </ControlButton>
