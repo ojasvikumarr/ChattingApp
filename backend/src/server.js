@@ -18,11 +18,11 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const server = http.createServer(app); // ⬅️ Create raw HTTP server for socket.io
 const PORT = process.env.PORT || 8000;
-
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 // ✅ Middlewares
 app.use(
   cors({
-    origin: "http://localhost:5173", // React frontend (adjust if needed)
+    origin: CLIENT_URL, // React frontend (adjust if needed)
     credentials: true,
   })
 );

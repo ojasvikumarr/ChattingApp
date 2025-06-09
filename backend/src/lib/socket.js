@@ -1,9 +1,10 @@
 import { Server } from "socket.io";
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
 export const setupSocket = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: "http://localhost:5173", // frontend origin
+      origin: CLIENT_URL, // frontend origin
       credentials: true,
     },
   });

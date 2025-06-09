@@ -10,6 +10,9 @@ import useAuthUser from "../hooks/useAuthUser";
 
 const SocketContext = createContext(null);
 
+// Get the socket URL from environment variables with fallback
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5001";
+
 export const useSocket = () => {
   const socket = useContext(SocketContext);
   return socket;
@@ -20,8 +23,8 @@ export const SocketProvider = (props) => {
   const { authUser } = useAuthUser();
 
   useEffect(() => {
-    // ✅ Create socket when component mounts
-    const newSocket = io("http://localhost:5001", {
+    // ✅ Create socket when component mounts using env variable
+    const newSocket = io(SOCKET_URL, {
       withCredentials: true,
     });
     setSocket(newSocket);
