@@ -11,6 +11,30 @@ export const setupSocket = (server) => {
   io.on("connection", (socket) => {
     console.log("Socket connected:", socket.id);
 
+    /* ==========================
+       💬 CHAT EVENTS (NEW)
+    ===========================*/
+
+    // Join a conversation room (1-1)
+    socket.on("chat:join", ({ conversationId }) => {
+      socket.join(conversationId);
+      console.log(`📥 Joined conversation: ${conversationId}`);
+    });
+
+    // Send a message inside a conversation
+    socket.on("chat:send", ({ conversationId, message }) => {
+      // message = { senderId, text }
+      io.to(conversationId).emit("chat:receive", {
+        conversationId,
+        message,
+      });
+      console.log(`💬 Message sent to ${conversationId}`);
+    });
+
+    /* ==========================
+       📞 VIDEO CALL EVENTS (UNCHANGED)
+    ===========================*/
+
     socket.on("room:join", ({ email, room }) => {
       socket.join(room);
       console.log(`${email} joined room: ${room}`);
@@ -27,45 +51,38 @@ export const setupSocket = (server) => {
       });
     });
 
-    // Handle call offer from Caller ➡️ Callee
     socket.on("user:call", ({ to, offer }) => {
       console.log(`📞 Call offer from ${socket.id} ➡️ ${to}`);
-      io.to(to).emit("incoming:call", { from: socket.id, offer }); // FIXED typo here
+      io.to(to).emit("incoming:call", { from: socket.id, offer });
     });
 
-    // Handle call answer from Callee ➡️ Caller
     socket.on("call:accepted", ({ to, ans }) => {
       console.log(`✅ Call accepted by ${socket.id} ➡️ ${to}`);
       io.to(to).emit("call:accepted", { from: socket.id, ans });
     });
 
-    // Handle ICE candidates exchange
     socket.on("ice-candidate", ({ to, candidate }) => {
       console.log(`ICE candidate from ${socket.id} to ${to}`);
       io.to(to).emit("ice-candidate", { candidate });
     });
 
-    // Negotiation needed (optional advanced signaling)
     socket.on("peer:nego:needed", ({ to, offer }) => {
       console.log(`🔁 Peer negotiation needed from ${socket.id} ➡️ ${to}`);
       io.to(to).emit("peer:nego:needed", { from: socket.id, offer });
     });
 
-    // Negotiation complete
     socket.on("peer:nego:done", ({ to, ans }) => {
       console.log(`✅ Peer negotiation done by ${socket.id} ➡️ ${to}`);
       io.to(to).emit("peer:nego:final", { from: socket.id, ans });
     });
 
-    socket.on("disconnect", () => {
-      console.log("❌ Socket disconnected:", socket.id);
-    });
-
-    // Handle call ended
     socket.on("call:ended", ({ to }) => {
       console.log(`❌ Call ended by ${socket.id} ➡️ ${to}`);
       io.to(to).emit("call:ended");
     });
 
+    socket.on("disconnect", () => {
+      console.log("❌ Socket disconnected:", socket.id);
+    });
   });
 };

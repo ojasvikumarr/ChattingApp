@@ -1,6 +1,5 @@
 import React, {
   createContext,
-  useMemo,
   useContext,
   useEffect,
   useState,
@@ -10,24 +9,41 @@ import useAuthUser from "../hooks/useAuthUser";
 
 const SocketContext = createContext(null);
 
-export const useSocket = () => {
-  const socket = useContext(SocketContext);
-  return socket;
+export const useSocket = () => useContext(SocketContext);
+
+let socketInstance = null;
+
+export const joinConversation = (conversationId) => {
+  socketInstance?.emit("chat:join", { conversationId });
 };
 
-export const SocketProvider = (props) => {
+export const sendMessage = (conversationId, message) => {
+  socketInstance?.emit("chat:send", { conversationId, message });
+};
+
+export const listenForMessages = (callback) => {
+  socketInstance?.on("chat:receive", callback);
+};
+
+export const stopListeningForMessages = () => {
+  socketInstance?.off("chat:receive");
+};
+
+export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const { authUser } = useAuthUser();
 
   useEffect(() => {
-    // ✅ Create socket when component mounts
     const newSocket = io("http://localhost:5001", {
       withCredentials: true,
     });
+
     setSocket(newSocket);
+    socketInstance = newSocket;
 
     return () => {
       newSocket.disconnect();
+      socketInstance = null;
     };
   }, []);
 
@@ -40,7 +56,7 @@ export const SocketProvider = (props) => {
 
   return (
     <SocketContext.Provider value={socket}>
-      {props.children}
+      {children}
     </SocketContext.Provider>
   );
 };
