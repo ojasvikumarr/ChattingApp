@@ -5,7 +5,7 @@ import { translateText } from "../services/gemini.js";
 
 const router = express.Router();
 
-// GET /api/chat/:conversationId
+
 router.get("/:conversationId", protectRoute, async (req, res) => {
   try {
     const { conversationId } = req.params;
@@ -18,7 +18,7 @@ router.get("/:conversationId", protectRoute, async (req, res) => {
   }
 });
 
-// POST /api/chat/message
+
 router.post("/message", protectRoute, async (req, res) => {
   try {
     const { conversationId, text, receiverId } = req.body;
@@ -28,12 +28,12 @@ router.post("/message", protectRoute, async (req, res) => {
       conversationId,
       senderId,
       text,
-      receiverId, // 👈 add this in your schema and model too if not already
+      receiverId, 
     });
 
     const savedMessage = await newMessage.save();
 
-    res.status(201).json(savedMessage); // make sure this has all required fields
+    res.status(201).json(savedMessage); 
   } catch (err) {
     console.error("Error saving message:", err.message);
     res.status(500).json({ message: "Failed to send message" });
@@ -43,13 +43,8 @@ router.post("/message", protectRoute, async (req, res) => {
 router.post("/translate", protectRoute, async (req, res) => {
   try {
     const { text } = req.body;
-
-    // Here you would integrate with your translation service
-    // For example, using Google Translate API or any other service
-    // This is a placeholder response
-    // const translatedText = `Translated : ${text}`;
     const translatedText = await translateText(text, "English");
-    // console.log("Translated text:", translatedText);
+
     res.json({ translatedText });
   } catch (err) {
     console.error("Error translating text:", err.message);
