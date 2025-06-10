@@ -10,9 +10,9 @@ const FriendCard = ({ friend }) => {
   const socket = useSocket(); // get socket from context
   // console.log("AuthUser", authUser);
   // console.log("FriendCard", friend);
+  // console.log('FriendCard ', friend);
   const handleCall = () => {
     const roomId = generateRoomId(authUser._id, friend._id);
-
 
     socket.emit("call-user", {
       to: friend._id, // target user ID
