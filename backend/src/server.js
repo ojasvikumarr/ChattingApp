@@ -9,6 +9,8 @@ import { setupSocket } from "./lib/socket.js"; // 👈 Your socket handlers
 
 import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/user.route.js";
+import chatRoutes from "./routes/chat.route.js";
+
 import { connectDB } from "./lib/db.js";
 
 // 👇 __dirname setup (for ES Modules like you're using)
@@ -32,6 +34,7 @@ app.use(cookieParser());
 // ✅ Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/chat", chatRoutes);
 
 // ✅ Serve frontend if in production mode
 if (process.env.NODE_ENV === "production") {

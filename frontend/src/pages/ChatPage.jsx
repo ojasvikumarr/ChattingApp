@@ -3,14 +3,66 @@ import { useSocket } from "../context/SocketProvider";
 import useAuthUser from "../hooks/useAuthUser";
 import { useThemeStore } from "../store/useThemeStore";
 import { Send } from "lucide-react";
+import { useParams } from "react-router";
+import { axiosInstance } from "../lib/axios";
 
-const CONVERSATION_ID = "pair-68412285a17a4c4bb32732dd-and-USER2_ID";
 
 const MOCK_USERS = {
   USER2_ID: "Rahul Sharma",
   "68412285a17a4c4bb32732dd": "Ojas Malhotra",
 };
 
+
+const ChatPage = () => {
+  const { authUser } = useAuthUser();
+  const socket = useSocket();
+  const theme = useThemeStore((state) => state.theme);
+  
+
+  const [messageText, setMessageText] = useState("");
+  const [messages, setMessages] = useState([]);
+  const messagesEndRef = useRef(null);
+
+  // Get other user name for title
+  // const otherUserId = getOtherUserId(CONVERSATION_ID, authUser?._id);
+  // const otherUserName = MOCK_USERS[otherUserId] || "Friend";
+
+  const { id:friendId } = useParams();
+// const CONVERSATION_ID = "pair-68412285a17a4c4bb32732dd-and-USER2_ID";
+  const CONVERSATION_ID = authUser && friendId
+    ? `pair-${[authUser._id, friendId].sort().join("-and-")}`
+    : null;
+
+  const otherUserName = friendId; // This will be replaced by actual data ideally
+
+  const handleTranslate = async (messageId, textToTranslate) => {
+    try {
+      // IMPORTANT: You'll need to create this backend endpoint.
+      // It should accept { text: "textToTranslate" } and return { translatedText: "..." }
+      const response = await axiosInstance.post("/chat/translate", { text: textToTranslate });
+      const { translatedText } = response.data;
+
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg._id === messageId // Assuming your messages have a unique _id
+            ? { ...msg, translatedText,showOriginal: false }
+            : msg
+        )
+      );
+    } catch (error) {
+      console.error("Error translating message:", error);
+      // Optionally, show an error to the user
+    }
+  };
+  const toggleShowOriginal = (messageId) => {
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) =>
+        msg._id === messageId
+          ? { ...msg, showOriginal: !msg.showOriginal }
+          : msg
+      )
+    );
+  };
 const getOtherUserId = (conversationId, currentUserId) => {
   const parts = conversationId.split("-and-");
   if (parts.length !== 2) return null;
@@ -21,33 +73,30 @@ const getOtherUserId = (conversationId, currentUserId) => {
   return part1.replace("pair-", "");
 };
 
-const ChatPage = () => {
-  const { authUser } = useAuthUser();
-  const socket = useSocket();
-  const theme = useThemeStore((state) => state.theme);
-
-  const [messageText, setMessageText] = useState("");
-  const [messages, setMessages] = useState([]);
-  const messagesEndRef = useRef(null);
-
-  // Get other user name for title
-  const otherUserId = getOtherUserId(CONVERSATION_ID, authUser?._id);
-  const otherUserName = MOCK_USERS[otherUserId] || "Friend";
-
   useEffect(() => {
     if (!socket || !authUser?._id) return;
 
     socket.emit("chat:join", { conversationId: CONVERSATION_ID });
 
     const handleReceiveMessage = ({ message }) => {
+      // FIXED THE ISSUE
+      // setMessages((prev) => {
+      //   if (
+      //     prev.length &&
+      //     prev[prev.length - 1].text === message.text &&
+      //     prev[prev.length - 1].senderId === message.senderId
+      //   ) {
+      //     return prev;
+      //   }
+      //   return [...prev, message];
+      // });
+      // setMessages((prev) => [...prev, message]);
+
       setMessages((prev) => {
-        if (
-          prev.length &&
-          prev[prev.length - 1].text === message.text &&
-          prev[prev.length - 1].senderId === message.senderId
-        ) {
-          return prev;
-        }
+        const alreadyExists = prev.some(
+          (m) => m._id === message._id // ensure _id exists in savedMessage
+        );
+        if (alreadyExists) return prev;
         return [...prev, message];
       });
     };
@@ -69,21 +118,44 @@ const ChatPage = () => {
     }
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!messageText.trim()) return;
+    try {
+      // Save message to DB
+      const res = await axiosInstance.post(`/chat/message`, {
+        conversationId: CONVERSATION_ID,
+        text: messageText.trim(),
+        receiverId: friendId,
+      });
+      const savedMessage = res.data;
+      console.log("Saved message:", savedMessage);
+      // Emit saved message via socket
+      socket.emit("chat:send", {
+        conversationId: CONVERSATION_ID,
+        message: savedMessage,
+      });
+      setMessageText("");
+      setMessages((prev) => [...prev, savedMessage]); // Optimistic update
+    } catch (err) {
+      console.error("Error sending message:", err.message);
+    }
+  };
 
-    const message = {
-      senderId: authUser._id,
-      text: messageText.trim(),
+
+  
+    const fetchMessages = async () => {
+      if (!CONVERSATION_ID) return;
+      try {
+        const res = await axiosInstance.get(`/chat/${CONVERSATION_ID}`);
+        setMessages(res.data.map(msg => ({ ...msg, id: msg._id }))); // Ensure messages have an id for key and translation mapping
+      } catch (err) {
+        console.error("Failed to load messages:", err.message);
+      }
     };
 
-    socket.emit("chat:send", {
-      conversationId: CONVERSATION_ID,
-      message,
-    });
-
-    setMessageText("");
-  };
+    useEffect(() => {
+      fetchMessages();
+    }, [CONVERSATION_ID]);
 
   return (
     <div
@@ -116,11 +188,11 @@ const ChatPage = () => {
           </p>
         )}
 
-        {messages.map((msg, idx) => {
+        {messages.map((msg) => { // Changed idx to msg._id for key if available, otherwise use index
           const isSender = msg.senderId === authUser._id;
           return (
             <div
-              key={idx}
+              key={msg._id || msg.id} // Use a unique ID for the key
               className={`flex my-1 ${
                 isSender ? "justify-end" : "justify-start"
               }`}
@@ -139,8 +211,32 @@ const ChatPage = () => {
                   minWidth: "40px",
                 }}
               >
-                {msg.text}
+              {msg.translatedText
+                ? msg.showOriginal
+                  ? msg.text
+                  : msg.translatedText
+                : msg.text
+              }
               </div>
+                {!isSender && (
+                    <div className="text-xs mt-1 pt-1">
+                      {!msg.translatedText ? (
+                        <button
+                          onClick={() => handleTranslate(msg._id || msg.id, msg.text)}
+                          className="text-blue-500 hover:text-blue-700"
+                        >
+                          Translate
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => toggleShowOriginal(msg._id || msg.id)}
+                          className="text-purple-500 hover:text-purple-700"
+                        >
+                          {msg.showOriginal ? "Show Translation" : "Show Original"}
+                        </button>
+                      )}
+                    </div>
+                  )}
             </div>
           );
         })}

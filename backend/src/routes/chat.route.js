@@ -1,20 +1,55 @@
 import express from "express";
-import { protectRoute } from "../middleware/auth.middleware.js";
-import {
-  getStreamToken,
-  createOrGetConversation,
-  getMessages,
-  sendMessage,
-} from "../controllers/chat.controller.js";
+import Message from "../models/Message.js";
+import {protectRoute} from "../middleware/auth.middleware.js";
+import { translateText } from "../services/gemini.js";
 
 const router = express.Router();
 
-// 🎥 Video call token
-router.get("/token", protectRoute, getStreamToken);
 
-// 💬 Chat routes
-router.post("/conversation", protectRoute, createOrGetConversation);
-router.get("/messages/:conversationId", protectRoute, getMessages);
-router.post("/message", protectRoute, sendMessage);
+router.get("/:conversationId", protectRoute, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+
+    const messages = await Message.find({ conversationId }).sort({ createdAt: 1 });
+    res.json(messages);
+  } catch (err) {
+    console.error("Error fetching messages:", err.message);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+router.post("/message", protectRoute, async (req, res) => {
+  try {
+    const { conversationId, text, receiverId } = req.body;
+    const senderId = req.user._id;
+
+    const newMessage = new Message({
+      conversationId,
+      senderId,
+      text,
+      receiverId, 
+    });
+
+    const savedMessage = await newMessage.save();
+
+    res.status(201).json(savedMessage); 
+  } catch (err) {
+    console.error("Error saving message:", err.message);
+    res.status(500).json({ message: "Failed to send message" });
+  }
+});
+
+router.post("/translate", protectRoute, async (req, res) => {
+  try {
+    const { text } = req.body;
+    const translatedText = await translateText(text, "English");
+
+    res.json({ translatedText });
+  } catch (err) {
+    console.error("Error translating text:", err.message);
+    res.status(500).json({ message: "Translation failed" });
+  }
+});
 
 export default router;

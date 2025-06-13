@@ -23,13 +23,46 @@ export const setupSocket = (server) => {
     });
 
     // Send a message inside a conversation
-    socket.on("chat:send", ({ conversationId, message }) => {
-      // message = { senderId, text }
-      io.to(conversationId).emit("chat:receive", {
-        conversationId,
-        message,
-      });
-      console.log(`💬 Message sent to ${conversationId}`);
+    socket.on("chat:send", async ({ conversationId, message }) => {
+      // `conversationId` is the ID of the chat room, passed from the client.
+      // `message` is the message object that was already saved to DB by the HTTP endpoint,
+      // sent back to the client, and then relayed here.
+      // It should contain all necessary fields like _id, senderId, receiverId, text, createdAt, etc.
+
+      if (!conversationId) {
+        console.error(
+          "❌ chat:send event received with null/empty conversationId. Message not broadcasted.",
+          { receivedMessage: message }
+        );
+        return;
+      }
+      // Ensure the message object itself and its essential properties are present.
+      if (!message || !message._id || !message.senderId || !message.text || !message.receiverId) {
+        console.error(
+          "❌ chat:send event received with invalid or incomplete message object. Message not broadcasted.",
+          { conversationId, receivedMessage: message }
+        );
+        return;
+      }
+
+      try {
+        // The message is already saved by the HTTP controller.
+        // We just need to broadcast it to other clients in the room.
+        io.to(conversationId).emit("chat:receive", {
+          conversationId, // Or message.conversationId, they should be identical
+          message,        // This is the fully formed message object from the database
+        });
+
+        console.log(
+          `💬 Message (ID: ${message._id}) broadcasted to conversation ${conversationId}`
+        );
+      } catch (err) {
+        console.error(
+          `❌ Error broadcasting message to ${conversationId}:`,
+          err.message,
+          { messageDetails: message }
+        );
+      }
     });
 
     /* ==========================
