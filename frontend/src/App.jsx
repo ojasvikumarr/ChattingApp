@@ -16,7 +16,7 @@ import PageLoader from "./components/PageLoader.jsx";
 import useAuthUser from "./hooks/useAuthUser.js";
 import Layout from "./components/Layout.jsx";
 import { useThemeStore } from "./store/useThemeStore.js";
-import VideoCallLobby from "./pages/videoCallLobby.jsx";
+import VideoCallLobby from "./pages/VideoCallLobby.jsx";
 import VideoCallRoom from "./pages/VideoCallRoom.jsx";
 import SocketEvents from "./components/SocketEvents.jsx";
 
