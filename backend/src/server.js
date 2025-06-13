@@ -2,7 +2,9 @@ import express from "express";
 import "dotenv/config";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+
 import path from "path";
+
 import { fileURLToPath } from "url";
 import http from "http";
 import { setupSocket } from "./lib/socket.js"; // 👈 Your socket handlers
@@ -38,9 +40,9 @@ app.use("/api/chat", chatRoutes);
 
 // ✅ Serve frontend if in production mode
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  app.use(express.static(path.join(__dirname, "../../frontend/dist")));
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+    res.sendFile(path.join(__dirname, "../../frontend", "dist", "index.html"));
   });
 }
 
