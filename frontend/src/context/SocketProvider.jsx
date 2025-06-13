@@ -38,7 +38,7 @@ export const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     // ✅ Create socket when component mounts
-    const newSocket = io("http://localhost:5001", {
+    const newSocket = io(SOCKET_URL, {
       withCredentials: true,
     });
 
