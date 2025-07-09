@@ -7,7 +7,7 @@ import path from "path";
 
 import { fileURLToPath } from "url";
 import http from "http";
-import { setupSocket } from "./lib/socket.js"; // 👈 Your socket handlers
+import { setupSocket } from "./lib/socket.js"; 
 
 import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/user.route.js";

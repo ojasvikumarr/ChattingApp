@@ -24,6 +24,8 @@ const OnboardingPage = () => {
     onSuccess: () => {
         //react  hot toast 
       toast.success("Profile onboarded successfully");
+      localStorage.setItem("learningLanguage", formState.learningLanguage);
+      localStorage.setItem("nativeLanguage", formState.nativeLanguage);
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },
 

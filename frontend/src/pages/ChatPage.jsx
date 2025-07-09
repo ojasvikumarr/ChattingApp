@@ -5,8 +5,7 @@ import { useThemeStore } from "../store/useThemeStore";
 import { Send } from "lucide-react";
 import { useParams } from "react-router";
 import { axiosInstance } from "../lib/axios";
-import { getFriendName } from "../lib/api"
-
+import { getFriendName } from "../lib/api";
 
 const ChatPage = () => {
   const { id: friendId } = useParams();
@@ -15,7 +14,6 @@ const ChatPage = () => {
   const { authUser } = useAuthUser();
   const socket = useSocket();
   const theme = useThemeStore((state) => state.theme);
-  
 
   const [messageText, setMessageText] = useState("");
   const [messages, setMessages] = useState([]);
@@ -25,39 +23,66 @@ const ChatPage = () => {
   // const otherUserId = getOtherUserId(CONVERSATION_ID, authUser?._id);
   // const otherUserName = MOCK_USERS[otherUserId] || "Friend";
 
-// const CONVERSATION_ID = "pair-68412285a17a4c4bb32732dd-and-USER2_ID";
-  const CONVERSATION_ID = authUser && friendId
-    ? `pair-${[authUser._id, friendId].sort().join("-and-")}`
-    : null;
+  // const CONVERSATION_ID = "pair-68412285a17a4c4bb32732dd-and-USER2_ID";
+  const CONVERSATION_ID =
+    authUser && friendId
+      ? `pair-${[authUser._id, friendId].sort().join("-and-")}`
+      : null;
 
   const otherUserName = friendId; // This will be replaced by actual data ideally
 
   useEffect(() => {
-  const fetchFriendName = async () => {
-    if (!friendId) return;
-    try {
-      const name = await getFriendName(friendId);
-      setFriendName(name);
-    } catch (error) {
-      console.error("Failed to fetch friend's name:", error.message);
-      setFriendName("Unknown");
-    }
-  };
+    const fetchFriendName = async () => {
+      if (!friendId) return;
+      try {
+        const name = await getFriendName(friendId);
+        setFriendName(name);
+      } catch (error) {
+        console.error("Failed to fetch friend's name:", error.message);
+        setFriendName("Unknown");
+      }
+    };
 
-  fetchFriendName();
-}, [friendId]);
+    fetchFriendName();
+  }, [friendId]);
+
+  // const handleTranslate = async (messageId, textToTranslate) => {
+  //   try {
+  //     // IMPORTANT: You'll need to create this backend endpoint.
+  //     // It should accept { text: "textToTranslate" } and return { translatedText: "..." }
+  //     const response = await axiosInstance.post("/chat/translate", {
+  //       text: textToTranslate,
+  //     });
+  //     const { translatedText } = response.data;
+
+  //     setMessages((prevMessages) =>
+  //       prevMessages.map((msg) =>
+  //         msg._id === messageId // Assuming your messages have a unique _id
+  //           ? { ...msg, translatedText, showOriginal: false }
+  //           : msg
+  //       )
+  //     );
+  //   } catch (error) {
+  //     console.error("Error translating message:", error);
+  //     // Optionally, show an error to the user
+  //   }
+  // };
 
   const handleTranslate = async (messageId, textToTranslate) => {
     try {
-      // IMPORTANT: You'll need to create this backend endpoint.
-      // It should accept { text: "textToTranslate" } and return { translatedText: "..." }
-      const response = await axiosInstance.post("/chat/translate", { text: textToTranslate });
+      const targetLang = localStorage.getItem("learningLanguage") || "english";
+
+      const response = await axiosInstance.post("/chat/translate", {
+        text: textToTranslate,
+        targetLang,
+      });
+
       const { translatedText } = response.data;
 
       setMessages((prevMessages) =>
         prevMessages.map((msg) =>
-          msg._id === messageId // Assuming your messages have a unique _id
-            ? { ...msg, translatedText,showOriginal: false }
+          msg._id === messageId
+            ? { ...msg, translatedText, showOriginal: false }
             : msg
         )
       );
@@ -66,6 +91,7 @@ const ChatPage = () => {
       // Optionally, show an error to the user
     }
   };
+
   const toggleShowOriginal = (messageId) => {
     setMessages((prevMessages) =>
       prevMessages.map((msg) =>
@@ -75,15 +101,15 @@ const ChatPage = () => {
       )
     );
   };
-const getOtherUserId = (conversationId, currentUserId) => {
-  const parts = conversationId.split("-and-");
-  if (parts.length !== 2) return null;
-  const [part1, user2Id] = parts;
-  if (part1.includes(currentUserId)) {
-    return user2Id;
-  }
-  return part1.replace("pair-", "");
-};
+  const getOtherUserId = (conversationId, currentUserId) => {
+    const parts = conversationId.split("-and-");
+    if (parts.length !== 2) return null;
+    const [part1, user2Id] = parts;
+    if (part1.includes(currentUserId)) {
+      return user2Id;
+    }
+    return part1.replace("pair-", "");
+  };
 
   useEffect(() => {
     if (!socket || !authUser?._id) return;
@@ -153,21 +179,19 @@ const getOtherUserId = (conversationId, currentUserId) => {
     }
   };
 
+  const fetchMessages = async () => {
+    if (!CONVERSATION_ID) return;
+    try {
+      const res = await axiosInstance.get(`/chat/${CONVERSATION_ID}`);
+      setMessages(res.data.map((msg) => ({ ...msg, id: msg._id }))); // Ensure messages have an id for key and translation mapping
+    } catch (err) {
+      console.error("Failed to load messages:", err.message);
+    }
+  };
 
-  
-    const fetchMessages = async () => {
-      if (!CONVERSATION_ID) return;
-      try {
-        const res = await axiosInstance.get(`/chat/${CONVERSATION_ID}`);
-        setMessages(res.data.map(msg => ({ ...msg, id: msg._id }))); // Ensure messages have an id for key and translation mapping
-      } catch (err) {
-        console.error("Failed to load messages:", err.message);
-      }
-    };
-
-    useEffect(() => {
-      fetchMessages();
-    }, [CONVERSATION_ID]);
+  useEffect(() => {
+    fetchMessages();
+  }, [CONVERSATION_ID]);
 
   return (
     <div
@@ -201,7 +225,8 @@ const getOtherUserId = (conversationId, currentUserId) => {
           </p>
         )}
 
-        {messages.map((msg) => { // Changed idx to msg._id for key if available, otherwise use index
+        {messages.map((msg) => {
+          // Changed idx to msg._id for key if available, otherwise use index
           const isSender = msg.senderId === authUser._id;
           return (
             <div
@@ -213,7 +238,9 @@ const getOtherUserId = (conversationId, currentUserId) => {
               <div
                 className={`p-2 rounded-xl break-words max-w-[70%] shadow-md transition-colors duration-300
                   ${
-                    isSender ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-900"
+                    isSender
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-900"
                   }
                 `}
                 style={{
@@ -224,32 +251,33 @@ const getOtherUserId = (conversationId, currentUserId) => {
                   minWidth: "40px",
                 }}
               >
-              {msg.translatedText
-                ? msg.showOriginal
-                  ? msg.text
-                  : msg.translatedText
-                : msg.text
-              }
+                {msg.translatedText
+                  ? msg.showOriginal
+                    ? msg.text
+                    : msg.translatedText
+                  : msg.text}
               </div>
-                {!isSender && (
-                    <div className="text-xs mt-1 pt-1">
-                      {!msg.translatedText ? (
-                        <button
-                          onClick={() => handleTranslate(msg._id || msg.id, msg.text)}
-                          className="text-blue-500 hover:text-blue-700"
-                        >
-                          Translate
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => toggleShowOriginal(msg._id || msg.id)}
-                          className="text-purple-500 hover:text-purple-700"
-                        >
-                          {msg.showOriginal ? "Show Translation" : "Show Original"}
-                        </button>
-                      )}
-                    </div>
+              {!isSender && (
+                <div className="text-xs mt-1 pt-1">
+                  {!msg.translatedText ? (
+                    <button
+                      onClick={() =>
+                        handleTranslate(msg._id || msg.id, msg.text)
+                      }
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      Translate
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => toggleShowOriginal(msg._id || msg.id)}
+                      className="text-purple-500 hover:text-purple-700"
+                    >
+                      {msg.showOriginal ? "Show Translation" : "Show Original"}
+                    </button>
                   )}
+                </div>
+              )}
             </div>
           );
         })}

@@ -40,16 +40,34 @@ router.post("/message", protectRoute, async (req, res) => {
   }
 });
 
-router.post("/translate", protectRoute, async (req, res) => {
-  try {
-    const { text } = req.body;
-    const translatedText = await translateText(text, "English");
+// router.post("/translate", protectRoute, async (req, res) => {
+//   try {
+//     const { text } = req.body;
+//     const translatedText = await translateText(text, "English");
 
-    res.json({ translatedText });
-  } catch (err) {
-    console.error("Error translating text:", err.message);
-    res.status(500).json({ message: "Translation failed" });
+//     res.json({ translatedText });
+//   } catch (err) {
+//     console.error("Error translating text:", err.message);
+//     res.status(500).json({ message: "Translation failed" });
+//   }
+// });
+// POST /api/chat/translate
+router.post("/translate", async (req, res) => {
+  try {
+    const { text, targetLang } = req.body;
+
+    if (!text || !targetLang) {
+      return res.status(400).json({ message: "Text and target language are required." });
+    }
+
+    const translatedText = await translateText(text, targetLang);
+
+    return res.status(200).json({ translatedText });
+  } catch (error) {
+    console.error("Translation error:", error.message);
+    return res.status(500).json({ message: "Failed to translate text." });
   }
 });
+
 
 export default router;

@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router";
+import { useEffect } from "react";
 
 import HomePage from "./pages/HomePage.jsx";
 import SignUpPage from "./pages/SignUpPage.jsx";
@@ -26,6 +27,18 @@ const App = () => {
 
   const isAuthenticated = Boolean(authUser);
   const isOnboarded = authUser?.isOnboarded;
+
+  useEffect(() => {
+    if (authUser && authUser.isOnboarded) {
+      if (authUser.learningLanguage) {
+        localStorage.setItem("learningLanguage", authUser.learningLanguage);
+        // localStorage.setItem("learningLanguage", "Italian");
+      }
+      if (authUser.nativeLanguage) {
+        localStorage.setItem("nativeLanguage", authUser.nativeLanguage);
+      }
+    }
+  }, [authUser]);
 
   if (isLoading) return <PageLoader />;
 
