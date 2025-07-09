@@ -1,4 +1,5 @@
 import { axiosInstance } from "./axios";
+import axios from "axios";
 
 export const signup = async (signupData) => {
   const response = await axiosInstance.post("/auth/signup", signupData);
@@ -62,4 +63,15 @@ export async function acceptFriendRequest(requestId) {
 export async function getStreamToken() {
   const response = await axiosInstance.get("/chat/token");
   return response.data;
-}
+} 
+
+export const getFriendName = async (friendId) => {
+  try {
+    const { data } = await axios.get(`/api/friends/${friendId}`); 
+    console.log("Friend API response:", data);
+    return data.fullName || data.user?.fullName || "Unknown User";
+  } catch (err) {
+    console.error("Failed to fetch friend name:", err.message);
+    return "Unknown User";
+  }
+};
