@@ -5,15 +5,13 @@ import { useThemeStore } from "../store/useThemeStore";
 import { Send } from "lucide-react";
 import { useParams } from "react-router";
 import { axiosInstance } from "../lib/axios";
-
-
-const MOCK_USERS = {
-  USER2_ID: "Rahul Sharma",
-  "68412285a17a4c4bb32732dd": "Ojas Malhotra",
-};
+import { getFriendName } from "../lib/api"
 
 
 const ChatPage = () => {
+  const { id: friendId } = useParams();
+  const [friendName, setFriendName] = useState("Loading...");
+
   const { authUser } = useAuthUser();
   const socket = useSocket();
   const theme = useThemeStore((state) => state.theme);
@@ -27,13 +25,27 @@ const ChatPage = () => {
   // const otherUserId = getOtherUserId(CONVERSATION_ID, authUser?._id);
   // const otherUserName = MOCK_USERS[otherUserId] || "Friend";
 
-  const { id:friendId } = useParams();
 // const CONVERSATION_ID = "pair-68412285a17a4c4bb32732dd-and-USER2_ID";
   const CONVERSATION_ID = authUser && friendId
     ? `pair-${[authUser._id, friendId].sort().join("-and-")}`
     : null;
 
   const otherUserName = friendId; // This will be replaced by actual data ideally
+
+  useEffect(() => {
+  const fetchFriendName = async () => {
+    if (!friendId) return;
+    try {
+      const name = await getFriendName(friendId);
+      setFriendName(name);
+    } catch (error) {
+      console.error("Failed to fetch friend's name:", error.message);
+      setFriendName("Unknown");
+    }
+  };
+
+  fetchFriendName();
+}, [friendId]);
 
   const handleTranslate = async (messageId, textToTranslate) => {
     try {
@@ -171,7 +183,8 @@ const getOtherUserId = (conversationId, currentUserId) => {
     >
       <header className="mb-4 border-b pb-2 flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-wide">
-          Chat with {otherUserName}
+          Chat with {friendName}
+          {console.log(friendName)}
         </h1>
       </header>
 
