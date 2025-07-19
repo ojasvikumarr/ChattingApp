@@ -13,7 +13,7 @@ router.get("/:conversationId", protectRoute, async (req, res) => {
     const messages = await Message.find({ conversationId }).sort({ createdAt: 1 });
     res.json(messages);
   } catch (err) {
-    console.error("Error fetching messages:", err.message);
+    console.error("error fetching messages:", err.message);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -35,8 +35,8 @@ router.post("/message", protectRoute, async (req, res) => {
 
     res.status(201).json(savedMessage); 
   } catch (err) {
-    console.error("Error saving message:", err.message);
-    res.status(500).json({ message: "Failed to send message" });
+    console.error("error saving message:", err.message);
+    res.status(500).json({ message: "failed to send message" });
   }
 });
 
@@ -47,7 +47,7 @@ router.post("/translate", protectRoute, async (req, res) => {
 
     res.json({ translatedText });
   } catch (err) {
-    console.error("Error translating text:", err.message);
+    console.error("error translating text:", err.message);
     res.status(500).json({ message: "Translation failed" });
   }
 });

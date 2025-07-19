@@ -37,7 +37,7 @@ export const SocketProvider = ({ children }) => {
   const { authUser } = useAuthUser();
 
   useEffect(() => {
-    // ✅ Create socket when component mounts
+
     const newSocket = io(SOCKET_URL, {
       withCredentials: true,
     });
@@ -54,7 +54,7 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     if (socket && authUser?._id) {
       socket.emit("join", { userId: authUser._id });
-      console.log("✅ JOINED SOCKET ROOM:", authUser._id);
+      console.log("JOINED SOCKET ROOM:", authUser._id);
     }
   }, [socket, authUser]);
 

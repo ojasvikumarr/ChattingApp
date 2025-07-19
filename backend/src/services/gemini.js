@@ -23,11 +23,11 @@ export const translateText = async (text, targetLang = "English") => {
       }
     }
     
-    console.error("Unexpected response structure:", result);
-    throw new Error("Could not extract translated text from response");
+    console.error("unexpected response structure:", result);
+    throw new Error("could not extract translated text from response");
     
   } catch (error) {
-    console.error("Error translating text:", error);
+    console.error("error translating text:", error);
     throw error;
   }
 };

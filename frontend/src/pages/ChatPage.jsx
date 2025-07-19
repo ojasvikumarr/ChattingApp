@@ -30,7 +30,7 @@ const ChatPage = () => {
     ? `pair-${[authUser._id, friendId].sort().join("-and-")}`
     : null;
 
-  const otherUserName = friendId; // This will be replaced by actual data ideally
+  const otherUserName = friendId; // this will be replaced by actual data ideally
 
   useEffect(() => {
   const fetchFriendName = async () => {
@@ -49,21 +49,18 @@ const ChatPage = () => {
 
   const handleTranslate = async (messageId, textToTranslate) => {
     try {
-      // IMPORTANT: You'll need to create this backend endpoint.
-      // It should accept { text: "textToTranslate" } and return { translatedText: "..." }
       const response = await axiosInstance.post("/chat/translate", { text: textToTranslate });
       const { translatedText } = response.data;
 
       setMessages((prevMessages) =>
         prevMessages.map((msg) =>
-          msg._id === messageId // Assuming your messages have a unique _id
+          msg._id === messageId
             ? { ...msg, translatedText,showOriginal: false }
             : msg
         )
       );
     } catch (error) {
-      console.error("Error translating message:", error);
-      // Optionally, show an error to the user
+      console.error("error translating message:", error);
     }
   };
   const toggleShowOriginal = (messageId) => {
@@ -91,22 +88,9 @@ const getOtherUserId = (conversationId, currentUserId) => {
     socket.emit("chat:join", { conversationId: CONVERSATION_ID });
 
     const handleReceiveMessage = ({ message }) => {
-      // FIXED THE ISSUE
-      // setMessages((prev) => {
-      //   if (
-      //     prev.length &&
-      //     prev[prev.length - 1].text === message.text &&
-      //     prev[prev.length - 1].senderId === message.senderId
-      //   ) {
-      //     return prev;
-      //   }
-      //   return [...prev, message];
-      // });
-      // setMessages((prev) => [...prev, message]);
-
       setMessages((prev) => {
         const alreadyExists = prev.some(
-          (m) => m._id === message._id // ensure _id exists in savedMessage
+          (m) => m._id === message._id 
         );
         if (alreadyExists) return prev;
         return [...prev, message];
@@ -133,7 +117,7 @@ const getOtherUserId = (conversationId, currentUserId) => {
   const handleSendMessage = async () => {
     if (!messageText.trim()) return;
     try {
-      // Save message to DB
+      // save message to DB
       const res = await axiosInstance.post(`/chat/message`, {
         conversationId: CONVERSATION_ID,
         text: messageText.trim(),
@@ -141,13 +125,13 @@ const getOtherUserId = (conversationId, currentUserId) => {
       });
       const savedMessage = res.data;
       console.log("Saved message:", savedMessage);
-      // Emit saved message via socket
+      // emit saved message via socket
       socket.emit("chat:send", {
         conversationId: CONVERSATION_ID,
         message: savedMessage,
       });
       setMessageText("");
-      setMessages((prev) => [...prev, savedMessage]); // Optimistic update
+      setMessages((prev) => [...prev, savedMessage]); // optimistic update
     } catch (err) {
       console.error("Error sending message:", err.message);
     }
@@ -159,7 +143,7 @@ const getOtherUserId = (conversationId, currentUserId) => {
       if (!CONVERSATION_ID) return;
       try {
         const res = await axiosInstance.get(`/chat/${CONVERSATION_ID}`);
-        setMessages(res.data.map(msg => ({ ...msg, id: msg._id }))); // Ensure messages have an id for key and translation mapping
+        setMessages(res.data.map(msg => ({ ...msg, id: msg._id }))); // ensure messages have an id for key and translation mapping
       } catch (err) {
         console.error("Failed to load messages:", err.message);
       }
@@ -205,7 +189,7 @@ const getOtherUserId = (conversationId, currentUserId) => {
           const isSender = msg.senderId === authUser._id;
           return (
             <div
-              key={msg._id || msg.id} // Use a unique ID for the key
+              key={msg._id || msg.id} // use a unique ID for the key
               className={`flex my-1 ${
                 isSender ? "justify-end" : "justify-start"
               }`}

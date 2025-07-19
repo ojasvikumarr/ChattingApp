@@ -148,13 +148,13 @@ const VideoCallRoom = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
 
-  // 1. Join room on mount
+  // 1 join room on mount
   useEffect(() => {
     const email = `user_${Math.floor(Math.random() * 10000)}`;
     socket.emit("room:join", { email, room: ROOM_ID });
   }, [socket]);
 
-  // 2. Listen for new user joined
+  // 2 listen for new user joined
   useEffect(() => {
     const handleUserJoined = ({ email, id }) => {
       console.log("User joined:", email, id);
@@ -165,7 +165,7 @@ const VideoCallRoom = () => {
     return () => socket.off("user:joined", handleUserJoined);
   }, [socket]);
 
-  // 3. Listen for incoming calls (offers)
+  // 3 listen for incoming calls (offers)
   useEffect(() => {
     const handleIncomingCall = async ({ from, offer }) => {
       console.log("Incoming call from:", from);
@@ -177,23 +177,23 @@ const VideoCallRoom = () => {
       });
       setMyStream(stream);
 
-      // Listen for remote tracks
+      // listen for remote tracks
       peer.peer.ontrack = (event) => {
         console.log("Received remote track");
         const [remoteStream] = event.streams;
         setRemoteStream(remoteStream);
       };
 
-      // Add your tracks
+      // add your tracks
       peer.addTracks(stream);
 
-      // Set remote description with the received offer
+      // set remote description with the received offer
       await peer.setRemoteDescription(offer);
 
-      // Create and set local answer description
+      // create and set local answer description
       const answer = await peer.getAnswer();
 
-      // Send answer back to caller
+      // send answer back to caller
       socket.emit("call:accepted", { to: from, ans: answer });
     };
 
@@ -201,7 +201,7 @@ const VideoCallRoom = () => {
     return () => socket.off("incoming:call", handleIncomingCall);
   }, [socket]);
 
-  // 4. Listen for call accepted (answer)
+  // 4 listen for call accepted (answer)
   useEffect(() => {
     const handleCallAccepted = async ({ ans }) => {
       console.log("Call accepted, setting remote description (answer)");
@@ -212,7 +212,7 @@ const VideoCallRoom = () => {
     return () => socket.off("call:accepted", handleCallAccepted);
   }, [socket]);
 
-  // 5. ICE candidate sending/receiving setup
+  // 5 ICE candidate sending/receiving setup
   useEffect(() => {
     // Send ICE candidates to remote peer via socket
     peer.onIceCandidate = (candidate) => {
@@ -221,7 +221,7 @@ const VideoCallRoom = () => {
       }
     };
 
-    // Receive ICE candidates from remote peer
+    // receive ICE candidates from remote peer
     const handleIceCandidate = async ({ candidate }) => {
       console.log("Received ICE candidate:", candidate);
       await peer.addIceCandidate(candidate);
@@ -231,7 +231,7 @@ const VideoCallRoom = () => {
     return () => socket.off("ice-candidate", handleIceCandidate);
   }, [socket, remoteSocketId]);
 
-  // 6. Make call to remote peer
+  // 6 make call to remote peer
   const handleCallUser = useCallback(async () => {
     if (!remoteSocketId) {
       alert("No user to call");
@@ -244,20 +244,20 @@ const VideoCallRoom = () => {
     });
     setMyStream(stream);
 
-    // Listen for remote tracks
+    // listen for remote tracks
     peer.peer.ontrack = (event) => {
       console.log("Received remote track");
       const [remoteStream] = event.streams;
       setRemoteStream(remoteStream);
     };
 
-    // Add local tracks to the peer connection
+    // add local tracks to the peer connection
     peer.addTracks(stream);
 
-    // Create offer and set local description
+    // create offer and set local description
     const offer = await peer.getOffer();
 
-    // Send offer to remote peer
+    // send offer to remote peer
     socket.emit("user:call", { to: remoteSocketId, offer });
   }, [remoteSocketId, socket]);
 
@@ -266,7 +266,7 @@ const VideoCallRoom = () => {
       socket.emit("call:ended", { to: remoteSocketId });
     }
 
-    // Cleanup local media and remote streams
+    // cleanup local media and remote streams
     myStream?.getTracks().forEach(track => track.stop());
     peer.peer.close();
     peer.resetPeer();
@@ -274,7 +274,7 @@ const VideoCallRoom = () => {
     setMyStream(null);
     setRemoteStream(null);
 
-    // Navigate back to home
+    // navigate back to home
     navigate("/");
   }, [remoteSocketId, socket, myStream, navigate]);
 

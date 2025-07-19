@@ -11,18 +11,12 @@ export const setupSocket = (server) => {
 
   io.on("connection", (socket) => {
     console.log("Socket connected:", socket.id);
-
-    /* ==========================
-       💬 CHAT EVENTS (NEW)
-    ===========================*/
-
-    // Join a conversation room (1-1)
     socket.on("chat:join", ({ conversationId }) => {
       socket.join(conversationId);
-      console.log(`📥 Joined conversation: ${conversationId}`);
+      console.log(`joined conversation: ${conversationId}`);
     });
 
-    // Send a message inside a conversation
+    // send a message inside a conversation
     socket.on("chat:send", async ({ conversationId, message }) => {
       // `conversationId` is the ID of the chat room, passed from the client.
       // `message` is the message object that was already saved to DB by the HTTP endpoint,
@@ -31,15 +25,15 @@ export const setupSocket = (server) => {
 
       if (!conversationId) {
         console.error(
-          "❌ chat:send event received with null/empty conversationId. Message not broadcasted.",
+          "error with message broadcasting",
           { receivedMessage: message }
         );
         return;
       }
-      // Ensure the message object itself and its essential properties are present.
+      // ensure the message object itself and its essential properties are present.
       if (!message || !message._id || !message.senderId || !message.text || !message.receiverId) {
         console.error(
-          "❌ chat:send event received with invalid or incomplete message object. Message not broadcasted.",
+          "error with message broadcasting",
           { conversationId, receivedMessage: message }
         );
         return;
@@ -54,29 +48,25 @@ export const setupSocket = (server) => {
         });
 
         console.log(
-          `💬 Message (ID: ${message._id}) broadcasted to conversation ${conversationId}`
+          ` message ID: ${message._id} broadcasted to conversation ${conversationId}`
         );
       } catch (err) {
         console.error(
-          `❌ Error broadcasting message to ${conversationId}:`,
+          `error broadcasting message to ${conversationId}:`,
           err.message,
           { messageDetails: message }
         );
       }
     });
 
-    /* ==========================
-       📞 VIDEO CALL EVENTS (UNCHANGED)
-    ===========================*/
-
     socket.on("room:join", ({ email, room }) => {
       socket.join(room);
       console.log(`${email} joined room: ${room}`);
 
-      // Notify other users in the room (except self)
+      // notify other users in the room (except self)
       socket.to(room).emit("user:joined", { email, id: socket.id });
 
-      // Notify the user who just joined about existing users
+      // notify the user who just joined about existing users
       const clientsInRoom = Array.from(io.sockets.adapter.rooms.get(room) || []);
       clientsInRoom.forEach((clientId) => {
         if (clientId !== socket.id) {
@@ -86,12 +76,12 @@ export const setupSocket = (server) => {
     });
 
     socket.on("user:call", ({ to, offer }) => {
-      console.log(`📞 Call offer from ${socket.id} ➡️ ${to}`);
+      console.log(`call offer from ${socket.id} ➡️ ${to}`);
       io.to(to).emit("incoming:call", { from: socket.id, offer });
     });
 
     socket.on("call:accepted", ({ to, ans }) => {
-      console.log(`✅ Call accepted by ${socket.id} ➡️ ${to}`);
+      console.log(`call accepted by ${socket.id} ➡️ ${to}`);
       io.to(to).emit("call:accepted", { from: socket.id, ans });
     });
 
@@ -101,22 +91,22 @@ export const setupSocket = (server) => {
     });
 
     socket.on("peer:nego:needed", ({ to, offer }) => {
-      console.log(`🔁 Peer negotiation needed from ${socket.id} ➡️ ${to}`);
+      console.log(`peer negotiation needed from ${socket.id} ➡️ ${to}`);
       io.to(to).emit("peer:nego:needed", { from: socket.id, offer });
     });
 
     socket.on("peer:nego:done", ({ to, ans }) => {
-      console.log(`✅ Peer negotiation done by ${socket.id} ➡️ ${to}`);
+      console.log(`peer negotiation done by ${socket.id} ➡️ ${to}`);
       io.to(to).emit("peer:nego:final", { from: socket.id, ans });
     });
 
     socket.on("call:ended", ({ to }) => {
-      console.log(`❌ Call ended by ${socket.id} ➡️ ${to}`);
+      console.log(`call ended by ${socket.id} ➡️ ${to}`);
       io.to(to).emit("call:ended");
     });
 
     socket.on("disconnect", () => {
-      console.log("❌ Socket disconnected:", socket.id);
+      console.log("socket disconnected:", socket.id);
     });
   });
 };

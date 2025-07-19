@@ -4,7 +4,7 @@ export async function getStreamToken(req, res) {
     const token = generateStreamToken(req.user.id);
     res.status(200).json({ token });
   } catch (error) {
-    console.log("Error in getStreamToken controller:", error.message);
+    console.log("error in getStreamToken controller:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
@@ -26,7 +26,7 @@ export async function createOrGetConversation(req, res) {
 
     res.status(200).json(conversation);
   } catch (error) {
-    console.error("Error creating/getting conversation:", error.message);
+    console.error("error creating/getting conversation:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
@@ -42,7 +42,7 @@ export async function getMessages(req, res) {
 
     res.status(200).json(messages);
   } catch (error) {
-    console.error("Error fetching messages:", error.message);
+    console.error("error fetching messages:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
@@ -60,7 +60,7 @@ export async function sendMessage(req, res) {
 
     res.status(201).json(message);
   } catch (error) {
-    console.error("Error sending message:", error.message);
+    console.error("error sending message:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }

@@ -10,7 +10,7 @@ class PeerService {
       ],
     });
 
-    // Send ICE candidates to the remote peer via signaling
+    // send ICE candidates to the remote peer via signaling
     this.peer.onicecandidate = (event) => {
       if (event.candidate && this.onIceCandidate) {
         this.onIceCandidate(event.candidate);
@@ -27,7 +27,7 @@ class PeerService {
 
   addTracks(stream) {
     if (!stream || !this.peer) return;
-    // Add all tracks without checking for duplicates (simpler & safer)
+    // add all tracks without checking for duplicates (simpler & safer)
     stream.getTracks().forEach(track => {
       this.peer.addTrack(track, stream);
     });
@@ -53,7 +53,7 @@ class PeerService {
     try {
       await this.peer.addIceCandidate(candidate);
     } catch (err) {
-      console.error("Error adding received ICE candidate", err);
+      console.error("error adding received ICE candidate", err);
     }
   }
 }
